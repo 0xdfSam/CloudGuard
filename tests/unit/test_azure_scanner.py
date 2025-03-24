@@ -53,7 +53,7 @@ def test_azure_scanner_mock_mode(mock_scanner):
     sys._called_from_test = True
     
     # Run the CLI with mock mode - patching sys.argv since main() doesn't accept args
-    with patch('sys.argv', ['azure', '--mock']), pytest.raises(SystemExit) as e:
+    with patch('sys.argv', ['azure', '--use-mock']), pytest.raises(SystemExit) as e:
         azure_main()
     
     # Clean up test flag

@@ -156,7 +156,7 @@ async def run_scan(args: argparse.Namespace) -> int:
         client_secret=client_secret,
         subscriptions=subscriptions,
         services=services,
-        use_mock=args.mock
+        use_mock=args.use_mock
     )
 
     # Start scan
@@ -165,7 +165,7 @@ async def run_scan(args: argparse.Namespace) -> int:
         # Determine if we're in a test environment
         in_test = hasattr(sys, '_called_from_test') or 'pytest' in sys.modules
         
-        if args.mock and in_test:
+        if args.use_mock and in_test:
             # In test environment with mock mode, use scan_all method
             findings = scanner.scan_all()
             

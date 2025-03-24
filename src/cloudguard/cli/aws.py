@@ -153,7 +153,7 @@ async def run_scan(args: argparse.Namespace) -> int:
         regions = args.regions.split(',')
 
     # Create scanner
-    if args.mock:
+    if args.use_mock:
         # Determine if we're in a test environment
         in_test = hasattr(sys, '_called_from_test') or 'pytest' in sys.modules
         

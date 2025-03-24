@@ -1,0 +1,69 @@
+{
+  "summary": {
+    "total_findings": 2,
+    "findings_by_service": {
+      "s3": 1,
+      "iam": 1
+    },
+    "findings_by_severity": {
+      "HIGH": 1,
+      "MEDIUM": 1
+    },
+    "findings_by_region": {
+      "us-east-1": 1,
+      "global": 1
+    }
+  },
+  "findings": [
+    {
+      "title": "Mock AWS S3 Finding",
+      "description": "This is a mock finding for testing purposes",
+      "provider": "aws",
+      "service": "s3",
+      "severity": 3,
+      "id": "d002111e-78f2-4c3e-bf14-230c78525255",
+      "resources": [
+        {
+          "id": "mock-bucket",
+          "name": "mock-bucket",
+          "type": "s3_bucket",
+          "region": "us-east-1",
+          "arn": "arn:aws:s3:::mock-bucket",
+          "properties": {}
+        }
+      ],
+      "remediation": null,
+      "framework_mappings": [],
+      "created_at": "2025-03-24 12:57:37.892918",
+      "risk_score": 0.0,
+      "tags": [],
+      "source": "cloudguard",
+      "metadata": {}
+    },
+    {
+      "title": "Mock AWS IAM Finding",
+      "description": "This is a mock finding for testing purposes",
+      "provider": "aws",
+      "service": "iam",
+      "severity": 2,
+      "id": "ad3852cb-5cea-4e54-8ec5-da2ef7c19df1",
+      "resources": [
+        {
+          "id": "AKIA1234567890EXAMPLE",
+          "name": "mock-user",
+          "type": "iam_user",
+          "region": "global",
+          "arn": "arn:aws:iam::123456789012:user/mock-user",
+          "properties": {}
+        }
+      ],
+      "remediation": null,
+      "framework_mappings": [],
+      "created_at": "2025-03-24 12:57:37.893634",
+      "risk_score": 0.0,
+      "tags": [],
+      "source": "cloudguard",
+      "metadata": {}
+    }
+  ]
+}

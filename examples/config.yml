@@ -1,0 +1,95 @@
+# CloudGuard Example Configuration
+# Save this file as .cloudguard.yml in your project directory
+
+scan_name: "Example Cloud Security Scan"
+output_dir: "reports"
+log_level: "INFO"
+fail_on_severity: "HIGH"  # One of: CRITICAL, HIGH, MEDIUM, LOW, INFO, NONE
+include_compliance: true
+compliance_frameworks:
+  - "CIS"
+  - "MITRE_ATTACK"
+max_findings: 1000
+
+# AWS Provider Configuration
+aws:
+  # Authentication (choose one method)
+  profile_name: "default"  # Use AWS profile
+  # Or use explicit credentials (not recommended except for testing)
+  # access_key_id: ""
+  # secret_access_key: ""
+  # session_token: ""
+  
+  # Assume role (optional)
+  # role_arn: "arn:aws:iam::123456789012:role/SecurityAudit"
+  
+  # Regions to scan
+  region: "us-east-1"  # Default region
+  regions:  # All regions to scan
+    - "us-east-1"
+    - "us-west-2"
+    - "eu-west-1"
+  
+  # Services to scan (comment out services you don't want to scan)
+  services:
+    - "s3"
+    - "iam"
+    - "ec2"
+    - "lambda"
+    - "rds"
+    - "apigateway"
+    - "kms"
+  
+  # Resources to exclude from scanning
+  excluded_resources:
+    # - "arn:aws:s3:::my-test-bucket"
+    # - "arn:aws:iam::123456789012:user/test-user"
+  
+  # Rate limiting
+  max_concurrent_scans: 5  # Maximum number of concurrent service scans
+  api_call_delay_ms: 0  # Delay between API calls (in milliseconds)
+
+# Azure Provider Configuration (planned for future)
+azure:
+  # Authentication
+  # tenant_id: ""
+  # client_id: ""
+  # client_secret: ""
+  # subscription_id: ""
+  
+  # Services to scan
+  services:
+    - "storage"
+    - "keyvault"
+    - "network"
+    - "compute"
+    - "database"
+    - "webapp"
+    - "container"
+  
+  # Optional filtering
+  resource_groups: []  # Empty means all resource groups
+  excluded_resources: []
+  
+  # Rate limiting
+  max_concurrent_scans: 5
+  api_call_delay_ms: 0
+
+# Report Configuration
+report:
+  output_dir: "reports"  # Can be different from the main output_dir
+  formats:
+    - "json"
+    - "html"
+    - "console"
+    # - "csv"
+  include_remediation: true
+  include_framework_mappings: true
+  min_severity: "LOW"  # Minimum severity to include in reports
+  group_by: "severity"  # One of: severity, service, provider
+  
+  # HTML report customization
+  # html_template: "custom_template.html"
+  # logo_path: "company_logo.png"
+  company_name: "Your Company Name"
+  # custom_css: "custom_style.css" 

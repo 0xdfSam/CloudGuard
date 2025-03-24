@@ -1,0 +1,17 @@
+include LICENSE
+include README.md
+include CONTRIBUTING.md
+include requirements.txt
+include pyproject.toml
+exclude .pre-commit-config.yaml
+exclude .gitignore
+recursive-include tests *
+recursive-exclude tests *.pyc
+recursive-exclude tests *.pyo
+recursive-exclude tests __pycache__
+recursive-include docs *
+recursive-exclude docs *.pyc
+recursive-exclude docs *.pyo
+recursive-exclude docs __pycache__
+prune .github
+prune docs/_build 

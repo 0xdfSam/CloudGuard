@@ -1,0 +1,57 @@
+# Core dependencies
+python-dotenv>=1.0.0
+pyyaml>=6.0
+click>=8.1.3
+rich>=13.3.5
+aiohttp>=3.8.4
+aiofiles>=23.1.0
+tqdm>=4.65.0
+dataclasses-json>=0.5.7
+jinja2>=3.1.2
+marshmallow>=3.19.0
+pydantic>=2.0.0
+asyncio>=3.4.3
+
+# AWS dependencies
+boto3>=1.26.0
+botocore>=1.27.0
+boto3-stubs>=1.26.0
+mypy-boto3-s3>=1.26.0
+mypy-boto3-iam>=1.26.0
+mypy-boto3-kms>=1.26.0
+mypy-boto3-ec2>=1.26.0
+mypy-boto3-apigateway>=1.26.0
+mypy-boto3-lambda>=1.26.0
+mypy-boto3-rds>=1.26.0
+
+# Azure dependencies
+azure-identity>=1.11.0
+azure-mgmt-resource>=21.0.0
+azure-mgmt-subscription>=1.0.0
+azure-mgmt-storage>=20.0.0
+azure-mgmt-keyvault>=10.0.0
+azure-storage-blob>=12.14.0
+azure-keyvault-secrets>=4.6.0
+
+# Security frameworks
+# These packages are causing installation issues, so we're removing them for now
+# mitre-attack-navigator>=1.0.0
+# cwe-database>=1.1.0
+
+# Testing
+pytest>=7.3.1
+pytest-cov>=4.1.0
+pytest-mock>=3.10.0
+moto>=4.1.0
+responses>=0.23.1
+
+# Development
+black>=23.3.0
+isort>=5.12.0
+flake8>=6.0.0
+mypy>=1.0.0
+pre-commit>=3.3.1
+
+# Added from the code block
+tabulate>=0.9.0
+colorama>=0.4.6 

@@ -128,142 +128,106 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def run_scan(args: argparse.Namespace) -> Dict[str, Any]:
-    """Run the AWS security scan.
-    
+async def run_scan(args: argparse.Namespace) -> int:
+    """Run AWS security scan.
+
     Args:
         args: Command-line arguments
-        
+
     Returns:
-        Dictionary with scan results
+        int: Exit code
     """
     # Configure logging
-    log_level = "DEBUG" if args.verbose else "INFO"
-    CloudGuardLogger.setup({"level": log_level})
-    
-    # Parse regions
-    regions = None
-    if args.regions:
-        regions = args.regions.split(",")
-    
-    # Parse services
-    services = None
+    log_level = logging.INFO
+    if args.verbose:
+        log_level = logging.DEBUG
+    logger.setLevel(log_level)
+
+    # Get services and regions from arguments
+    services = []
     if args.services:
-        services = args.services.split(",")
-    
-    if args.use_mock:
-        # Check if we're in a test environment (when AwsScanner is mocked)
-        if hasattr(sys, '_called_from_test') or 'pytest' in sys.modules:
+        services = args.services.split(',')
+
+    regions = []
+    if args.regions:
+        regions = args.regions.split(',')
+
+    # Create scanner
+    if args.mock:
+        # Determine if we're in a test environment
+        in_test = hasattr(sys, '_called_from_test') or 'pytest' in sys.modules
+        
+        if in_test:
             logger.info("Using mock mode with scanner in test environment")
-            scanner = AwsScanner(
-                regions=regions,
-                services=services,
-                use_mock=True
-            )
-            mock_findings = scanner.scan_all()
+            try:
+                scanner = AwsScanner(use_mock=True)
+                mock_findings = scanner.scan_all()
+                
+                # Convert findings from dict to Finding objects if needed
+                findings = []
+                for finding_dict in mock_findings:
+                    if isinstance(finding_dict, dict):
+                        # Create Finding object from dictionary
+                        findings.append(Finding(
+                            title=finding_dict["title"],
+                            description=finding_dict["description"],
+                            severity=finding_dict["severity"],
+                            service=finding_dict["service"],
+                            resource=finding_dict["resource"]
+                        ))
+                    else:
+                        findings.append(finding_dict)
+            except Exception as e:
+                logger.error(f"Error running scan: {e}")
+                return 1
         else:
-            # Create a mock finder with sample findings
-            logger.info("Using mock mode, returning mock findings")
-            
-            # Create mock findings
-            mock_findings = [
+            # Return mock findings, for testing purposes
+            logger.info("Using mock mode with hardcoded findings")
+            findings = [
                 Finding(
                     title="Mock AWS S3 Finding",
                     description="This is a mock finding for testing purposes",
-                    provider="aws",
-                    service="s3",
                     severity=Severity.HIGH,
-                    resources=[
-                        Resource(
-                            id="mock-bucket",
-                            name="mock-bucket",
-                            type="s3_bucket",
-                            region="us-east-1",
-                            arn="arn:aws:s3:::mock-bucket"
-                        )
-                    ]
+                    service="s3",
+                    resource={
+                        "id": "mock-bucket",
+                        "name": "mock-bucket",
+                        "type": "s3_bucket",
+                        "region": "us-east-1",
+                        "service": "s3",
+                        "arn": "arn:aws:s3:::mock-bucket"
+                    }
                 ),
                 Finding(
                     title="Mock AWS IAM Finding",
                     description="This is a mock finding for testing purposes",
-                    provider="aws",
-                    service="iam",
                     severity=Severity.MEDIUM,
-                    resources=[
-                        Resource(
-                            id="AKIA1234567890EXAMPLE",
-                            name="mock-user",
-                            type="iam_user",
-                            region="global",
-                            arn="arn:aws:iam::123456789012:user/mock-user"
-                        )
-                    ]
+                    service="iam",
+                    resource={
+                        "id": "mock-user",
+                        "name": "mock-user",
+                        "type": "iam_user",
+                        "region": "global",
+                        "service": "iam",
+                        "arn": "arn:aws:iam::123456789012:user/mock-user"
+                    }
                 )
             ]
+    else:
+        # Create scanner
+        scanner = AwsScanner(
+            aws_access_key_id=args.aws_access_key_id,
+            aws_secret_access_key=args.aws_secret_access_key,
+            aws_session_token=args.aws_session_token,
+            profile_name=args.profile_name,
+            regions=regions,
+            services=services,
+            max_workers=args.max_workers
+        )
         
-        # Create mock resources
-        mock_resources = {
-            "s3": [
-                {
-                    "id": "mock-bucket",
-                    "name": "mock-bucket",
-                    "type": "s3_bucket",
-                    "region": "us-east-1",
-                    "arn": "arn:aws:s3:::mock-bucket",
-                    "created": "2025-03-24T12:00:00Z",
-                    "tags": {
-                        "Environment": "Development",
-                        "Project": "CloudGuard"
-                    }
-                }
-            ],
-            "iam": [
-                {
-                    "id": "AKIA1234567890EXAMPLE",
-                    "name": "mock-user",
-                    "type": "iam_user",
-                    "region": "global",
-                    "arn": "arn:aws:iam::123456789012:user/mock-user",
-                    "created": "2025-03-24T12:00:00Z",
-                    "tags": {
-                        "Department": "Security",
-                        "Project": "CloudGuard"
-                    }
-                }
-            ]
-        }
-        
-        # Generate summary
-        summary = generate_summary(mock_findings)
-        
-        # Prepare results
-        results = {
-            "summary": summary
-        }
-        
-        if not args.summary:
-            results["findings"] = [finding.to_dict() for finding in mock_findings]
-        
-        if args.resources:
-            results["resources"] = mock_resources
-        
-        logger.info(f"Mock scan completed, found {len(mock_findings)} issues")
-        return results
-    
-    # Create scanner
-    scanner = AwsScanner(
-        aws_access_key_id=args.aws_access_key_id,
-        aws_secret_access_key=args.aws_secret_access_key,
-        aws_session_token=args.aws_session_token,
-        profile_name=args.profile_name,
-        regions=regions,
-        services=services,
-        max_workers=args.max_workers
-    )
-    
-    # Run scan
-    logger.info("Starting AWS security scan")
-    findings = scanner.scan()
+        # Run scan
+        logger.info("Starting AWS security scan")
+        findings = scanner.scan()
     
     # Get resources if requested
     resources = {}
@@ -285,8 +249,11 @@ def run_scan(args: argparse.Namespace) -> Dict[str, Any]:
     if args.resources:
         results["resources"] = resources
     
+    # Output results based on format
+    output_results(results, args.format, args.output)
+
     logger.info(f"Scan completed, found {len(findings)} issues")
-    return results
+    return 0
 
 
 def generate_summary(findings: List[Finding]) -> Dict[str, Any]:
@@ -339,31 +306,32 @@ def generate_summary(findings: List[Finding]) -> Dict[str, Any]:
     }
 
 
-def output_results(results: Dict[str, Any], args: argparse.Namespace) -> None:
+def output_results(results: Dict[str, Any], output_format: str, output_file: Optional[str] = None) -> None:
     """Output scan results.
     
     Args:
         results: Scan results
-        args: Command-line arguments
+        output_format: Output format (json, csv)
+        output_file: Output file path
     """
     # Convert findings to dictionaries for serialization
-    if 'findings' in results and isinstance(results['findings'], list):
-        results['findings'] = [
-            finding.to_dict() if hasattr(finding, 'to_dict') else finding
-            for finding in results['findings']
+    if "findings" in results:
+        results["findings"] = [
+            finding if isinstance(finding, dict) else finding.to_dict()
+            for finding in results["findings"]
         ]
     
-    if args.format == "json":
+    if output_format == "json":
         output = json.dumps(results, indent=2, default=lambda o: str(o))
-    elif args.format == "csv":
+    elif output_format == "csv":
         output = convert_to_csv(results)
     else:
         output = str(results)
     
-    if args.output:
-        with open(args.output, "w") as f:
+    if output_file:
+        with open(output_file, "w") as f:
             f.write(output)
-        logger.info(f"Results written to {args.output}")
+        logger.info(f"Results written to {output_file}")
     else:
         print(output)
 
@@ -441,33 +409,16 @@ def convert_to_csv(results: Dict[str, Any]) -> str:
     return output.getvalue()
 
 
-def main() -> int:
-    """Main entry point for the AWS CLI.
-    
-    Returns:
-        Exit code
-    """
+def aws_main() -> None:
+    """Main entry point for AWS scan."""
     try:
         args = parse_args()
-        results = run_scan(args)
-        
-        if "error" in results:
-            logger.error(results["error"])
-            sys.exit(1)
-        
-        output_results(results, args)
-        sys.exit(0)
-        
+        exit_code = asyncio.run(run_scan(args))
+        sys.exit(exit_code)
     except KeyboardInterrupt:
         logger.info("Scan interrupted by user")
-        sys.exit(130)
-    except Exception as e:
-        logger.error(f"Error running scan: {str(e)}")
-        if args.verbose:
-            import traceback
-            traceback.print_exc()
         sys.exit(1)
 
 
 if __name__ == "__main__":
-    sys.exit(main()) 
+    aws_main() 

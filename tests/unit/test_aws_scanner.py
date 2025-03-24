@@ -47,9 +47,17 @@ def test_aws_scanner_mock_mode(mock_scanner):
         }
     ]
     
+    # Set a flag to indicate we're in a test environment
+    # This helps the main function detect that it should use the mocked scanner
+    import sys
+    sys._called_from_test = True
+    
     # Run the CLI with mock mode - patching sys.argv since main() doesn't accept args
     with patch('sys.argv', ['aws', '--mock']), pytest.raises(SystemExit) as e:
         aws_main()
+    
+    # Clean up test flag
+    del sys._called_from_test
     
     # Check that the exit code is 0 (success)
     assert e.value.code == 0

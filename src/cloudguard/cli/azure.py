@@ -352,20 +352,20 @@ def main() -> int:
         
         if "error" in results:
             logger.error(results["error"])
-            return 1
+            sys.exit(1)
         
         output_results(results, args)
-        return 0
+        sys.exit(0)
         
     except KeyboardInterrupt:
         logger.info("Scan interrupted by user")
-        return 130
+        sys.exit(130)
     except Exception as e:
         logger.error(f"Error running scan: {str(e)}")
         if args.verbose:
             import traceback
             traceback.print_exc()
-        return 1
+        sys.exit(1)
 
 
 if __name__ == "__main__":

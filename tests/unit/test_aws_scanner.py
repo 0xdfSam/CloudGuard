@@ -47,9 +47,9 @@ def test_aws_scanner_mock_mode(mock_scanner):
         }
     ]
     
-    # Run the CLI with mock mode
-    with pytest.raises(SystemExit) as e:
-        aws_main(["--mock"])
+    # Run the CLI with mock mode - patching sys.argv since main() doesn't accept args
+    with patch('sys.argv', ['aws', '--mock']), pytest.raises(SystemExit) as e:
+        aws_main()
     
     # Check that the exit code is 0 (success)
     assert e.value.code == 0

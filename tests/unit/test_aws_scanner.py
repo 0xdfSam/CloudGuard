@@ -53,7 +53,7 @@ def test_aws_scanner_mock_mode(mock_scanner):
     sys._called_from_test = True
     
     # Run the CLI with mock mode - patching sys.argv since main() doesn't accept args
-    with patch('sys.argv', ['aws', '--use-mock']), pytest.raises(SystemExit) as e:
+    with patch('sys.argv', ['aws', '--mock']), pytest.raises(SystemExit) as e:
         aws_main()
     
     # Clean up test flag

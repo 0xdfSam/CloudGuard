@@ -20,7 +20,7 @@ def test_aws_scanner_mock_mode(mock_scanner):
         {
             "title": "Mock AWS S3 Finding",
             "description": "This is a mock finding for testing purposes",
-            "severity": Severity.HIGH.value,
+            "severity": Severity.HIGH,
             "service": "s3",
             "resource": {
                 "id": "mock-bucket",
@@ -34,7 +34,7 @@ def test_aws_scanner_mock_mode(mock_scanner):
         {
             "title": "Mock AWS IAM Finding",
             "description": "This is a mock finding for testing purposes",
-            "severity": Severity.MEDIUM.value,
+            "severity": Severity.MEDIUM,
             "service": "iam",
             "resource": {
                 "id": "mock-user",

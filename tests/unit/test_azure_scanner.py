@@ -20,7 +20,7 @@ def test_azure_scanner_mock_mode(mock_scanner):
         {
             "title": "Mock Azure Storage Finding",
             "description": "This is a mock finding for testing purposes",
-            "severity": Severity.HIGH.value,
+            "severity": Severity.HIGH,
             "service": "storage",
             "resource": {
                 "id": "mock-storage-account",
@@ -34,7 +34,7 @@ def test_azure_scanner_mock_mode(mock_scanner):
         {
             "title": "Mock Azure Key Vault Finding",
             "description": "This is a mock finding for testing purposes",
-            "severity": Severity.MEDIUM.value,
+            "severity": Severity.MEDIUM,
             "service": "keyvault",
             "resource": {
                 "id": "mock-keyvault",

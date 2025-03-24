@@ -14,7 +14,7 @@ from io import StringIO
 from typing import Dict, List, Any, Optional
 
 from cloudguard.providers.aws.main import AwsScanner
-from cloudguard.core.findings import Finding
+from cloudguard.core.findings import Finding, Severity, Resource
 from cloudguard.utils.logger import CloudGuardLogger, get_logger
 
 logger = get_logger(__name__)
@@ -154,7 +154,6 @@ def run_scan(args: argparse.Namespace) -> Dict[str, Any]:
     if args.use_mock:
         # Create a mock finder with sample findings
         logger.info("Using mock mode, returning mock findings")
-        from cloudguard.core.findings import Finding, Severity, Resource
         
         # Create mock findings
         mock_findings = [
@@ -163,7 +162,7 @@ def run_scan(args: argparse.Namespace) -> Dict[str, Any]:
                 description="This is a mock finding for testing purposes",
                 provider="aws",
                 service="s3",
-                severity=Severity.HIGH.value,
+                severity=Severity.HIGH,
                 resources=[
                     Resource(
                         id="mock-bucket",
@@ -179,7 +178,7 @@ def run_scan(args: argparse.Namespace) -> Dict[str, Any]:
                 description="This is a mock finding for testing purposes",
                 provider="aws",
                 service="iam",
-                severity=Severity.MEDIUM.value,
+                severity=Severity.MEDIUM,
                 resources=[
                     Resource(
                         id="AKIA1234567890EXAMPLE",

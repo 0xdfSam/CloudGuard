@@ -183,7 +183,7 @@ class AzureScanner:
                     description="This is a mock finding for testing purposes",
                     provider="azure",
                     service="storage",
-                    severity=Severity.HIGH.value,
+                    severity=Severity.HIGH,
                     resources=[
                         Resource(
                             id="/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/test-rg/providers/Microsoft.Storage/storageAccounts/teststorage",
@@ -198,7 +198,7 @@ class AzureScanner:
                     description="This is a mock finding for testing purposes",
                     provider="azure",
                     service="keyvault",
-                    severity=Severity.MEDIUM.value,
+                    severity=Severity.MEDIUM,
                     resources=[
                         Resource(
                             id="/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/test-rg/providers/Microsoft.KeyVault/vaults/testvault",

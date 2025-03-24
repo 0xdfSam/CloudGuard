@@ -8,7 +8,7 @@ from cloudguard.cli.aws import main as aws_main
 from cloudguard.core.findings import Severity
 
 
-@patch('cloudguard.cli.aws.AWSScanner')
+@patch('cloudguard.cli.aws.AwsScanner')
 def test_aws_scanner_mock_mode(mock_scanner):
     """Test AWS scanner in mock mode."""
     # Mock the scanner instance

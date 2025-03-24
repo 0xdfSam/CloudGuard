@@ -163,32 +163,45 @@ class Finding:
         Returns:
             Dictionary representation of the finding
         """
-        data = json.loads(self.to_json())
+        # First, handle the severity enum directly instead of relying on JSON serialization
+        # This ensures we always get the expected string representation
+        data_dict = {
+            "title": self.title,
+            "description": self.description,
+            "provider": self.provider,
+            "service": self.service,
+            "id": str(self.id) if self.id else None,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "risk_score": self.risk_score,
+            "tags": list(self.tags) if self.tags else [],
+            "source": self.source,
+            "metadata": self.metadata,
+        }
         
-        # Convert enum values to their string representations
-        if 'severity' in data:
-            if isinstance(data['severity'], int):
-                severity_map = {
-                    0: "INFO",
-                    1: "LOW",
-                    2: "MEDIUM",
-                    3: "HIGH",
-                    4: "CRITICAL"
-                }
-                data['severity'] = severity_map.get(data['severity'], "UNKNOWN")
-            elif isinstance(data['severity'], dict) and 'name' in data['severity']:
-                # Handle enum serialized as a dict with name field
-                data['severity'] = data['severity']['name']
+        # Handle severity properly - convert enum to string name
+        if self.severity is not None:
+            if isinstance(self.severity, enum.Enum):
+                data_dict["severity"] = self.severity.name
+            else:
+                data_dict["severity"] = self.severity
+
+        # Handle resources
+        if self.resources:
+            data_dict["resources"] = [r.to_dict() if hasattr(r, 'to_dict') else r for r in self.resources]
+        else:
+            data_dict["resources"] = []
+
+        # Handle remediation
+        if self.remediation:
+            data_dict["remediation"] = self.remediation.to_dict() if hasattr(self.remediation, 'to_dict') else self.remediation
         
-        # Convert UUID to string
-        if 'id' in data:
-            data['id'] = str(data['id'])
+        # Handle framework mappings
+        if self.framework_mappings:
+            data_dict["framework_mappings"] = [
+                m.to_dict() if hasattr(m, 'to_dict') else m for m in self.framework_mappings
+            ]
         
-        # Ensure created_at is a string
-        if 'created_at' in data and not isinstance(data['created_at'], str):
-            data['created_at'] = data['created_at'].isoformat()
-        
-        return data
+        return data_dict
     
     def calculate_risk_score(self) -> float:
         """Calculate a normalized risk score based on severity and other factors.

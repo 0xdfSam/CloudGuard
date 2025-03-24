@@ -379,26 +379,16 @@ def convert_to_csv(results: Dict[str, Any]) -> str:
     return output.getvalue()
 
 
-def main() -> int:
-    """Main entry point for the Azure CLI.
-    
-    Returns:
-        Exit code
-    """
+def azure_main() -> None:
+    """Main entry point for Azure scan."""
     try:
         args = parse_args()
         exit_code = asyncio.run(run_scan(args))
         sys.exit(exit_code)
     except KeyboardInterrupt:
         logger.info("Scan interrupted by user")
-        sys.exit(130)
-    except Exception as e:
-        logger.error(f"Error running scan: {str(e)}")
-        if args.verbose:
-            import traceback
-            traceback.print_exc()
         sys.exit(1)
 
 
 if __name__ == "__main__":
-    sys.exit(main()) 
+    azure_main() 

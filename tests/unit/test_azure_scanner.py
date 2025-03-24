@@ -4,7 +4,7 @@ Unit tests for the Azure scanner.
 
 import pytest
 from unittest.mock import patch, MagicMock
-from cloudguard.cli.azure import main as azure_main
+from cloudguard.cli.azure import azure_main
 from cloudguard.core.findings import Severity
 
 

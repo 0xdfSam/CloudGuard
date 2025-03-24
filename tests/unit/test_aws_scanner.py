@@ -4,7 +4,7 @@ Unit tests for the AWS scanner.
 
 import pytest
 from unittest.mock import patch, MagicMock
-from cloudguard.cli.aws import main as aws_main
+from cloudguard.cli.aws import aws_main
 from cloudguard.core.findings import Severity
 
 

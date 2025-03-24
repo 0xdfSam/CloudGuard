@@ -17,11 +17,11 @@ setup(
     description="A security scanning tool for AWS and Azure cloud environments",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/cloudguard-project/cloudguard",
+    url="https://github.com/0xdfSam/CloudGuard",
     project_urls={
-        "Bug Tracker": "https://github.com/cloudguard-project/cloudguard/issues",
-        "Documentation": "https://github.com/cloudguard-project/cloudguard",
-        "Source Code": "https://github.com/cloudguard-project/cloudguard",
+        "Bug Tracker": "https://github.com/0xdfSam/CloudGuard/issues",
+        "Documentation": "https://github.com/0xdfSam/CloudGuard",
+        "Source Code": "https://github.com/0xdfSam/CloudGuard",
     },
     classifiers=[
         "Development Status :: 4 - Beta",
@@ -54,6 +54,8 @@ setup(
             "flake8>=6.0.0",
             "mypy>=1.0.0",
             "pre-commit>=3.3.1",
+            "typing-extensions>=4.0.0",
+            "importlib-metadata>=4.6.0",
         ],
         "docs": [
             "sphinx>=6.1.3",

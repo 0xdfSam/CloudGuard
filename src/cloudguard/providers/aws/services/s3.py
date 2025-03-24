@@ -605,7 +605,7 @@ class S3Scanner(AwsServiceScanner):
                         RemediationStep(
                             title="Add secure transport policy using AWS CLI",
                             description="Run the following AWS CLI command",
-                            code=f"aws s3api put-bucket-policy --bucket {bucket_name} --policy '{secure_transport_policy.replace('\"', '\\\\\\"')}'",
+                            code=f"aws s3api put-bucket-policy --bucket {bucket_name} --policy '{secure_transport_policy}'",
                             code_language="bash"
                         )
                     ],

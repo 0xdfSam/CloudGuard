@@ -166,15 +166,19 @@ class Finding:
         data = json.loads(self.to_json())
         
         # Convert enum values to their string representations
-        if isinstance(data.get('severity'), int):
-            severity_map = {
-                0: "INFO",
-                1: "LOW",
-                2: "MEDIUM",
-                3: "HIGH",
-                4: "CRITICAL"
-            }
-            data['severity'] = severity_map.get(data['severity'], "UNKNOWN")
+        if 'severity' in data:
+            if isinstance(data['severity'], int):
+                severity_map = {
+                    0: "INFO",
+                    1: "LOW",
+                    2: "MEDIUM",
+                    3: "HIGH",
+                    4: "CRITICAL"
+                }
+                data['severity'] = severity_map.get(data['severity'], "UNKNOWN")
+            elif isinstance(data['severity'], dict) and 'name' in data['severity']:
+                # Handle enum serialized as a dict with name field
+                data['severity'] = data['severity']['name']
         
         # Convert UUID to string
         if 'id' in data:

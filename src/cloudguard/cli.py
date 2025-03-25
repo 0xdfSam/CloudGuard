@@ -56,18 +56,11 @@ def cli():
 
 
 @cli.command()
-@click.option(
-    "--config", "-c",
-    type=click.Path(exists=True, file_okay=True, dir_okay=False, readable=True),
-    help="Path to configuration file"
-)
-@click.option(
-    "--output-dir", "-o",
-    type=click.Path(file_okay=False, dir_okay=True, writable=True),
-    help="Directory to save reports"
-)
+@click.option("--config", "-c", type=click.Path(exists=True), help="Path to configuration file.")
+@click.option("--output-dir", "-o", type=click.Path(), help="Directory to store scan results.")
+@click.option("--providers", help="Comma-separated list of cloud providers to scan (aws, azure).")
 @click.option("--aws-profile", help="AWS profile name")
-@click.option("--aws-region", help="AWS region(s) to scan (comma-separated)")
+@click.option("--aws-region", help="AWS region")
 @click.option("--aws-services", help="AWS services to scan (comma-separated)")
 @click.option("--azure/--no-azure", default=False, help="Enable/disable Azure scan")
 @click.option("--all-providers", is_flag=True, help="Scan all supported providers")
@@ -91,9 +84,11 @@ def cli():
 )
 @click.option("--log-level", "-l", default="INFO", help="Logging level")
 @click.option("--scan-id", help="Custom scan identifier")
+@click.option("--mock", is_flag=True, help="Use mock data instead of connecting to cloud providers")
 def scan(
     config: Optional[str],
     output_dir: Optional[str],
+    providers: Optional[str],
     aws_profile: Optional[str],
     aws_region: Optional[str],
     aws_services: Optional[str],
@@ -104,6 +99,7 @@ def scan(
     fail_on: str,
     log_level: str,
     scan_id: Optional[str],
+    mock: bool,
 ):
     """Scan cloud providers for security vulnerabilities."""
     # Load configuration
@@ -127,6 +123,9 @@ def scan(
     if output_dir:
         cli_config["output_dir"] = output_dir
         cli_config["report"] = {"output_dir": output_dir}
+    
+    if providers:
+        cli_config["providers"] = providers
     
     if aws_profile:
         if not "aws" in cli_config:
@@ -169,6 +168,9 @@ def scan(
         # Generate scan ID if not provided
         cli_config["scan_id"] = f"scan-{datetime.now().strftime('%Y%m%d-%H%M%S')}"
     
+    if mock:
+        cli_config["mock"] = True
+    
     # Merge command-line options with config
     scan_config = merge_configs(scan_config, cli_config)
     
@@ -202,14 +204,37 @@ async def run_scan(scan_config: ScanConfig, azure: bool, all_providers: bool) ->
     # Initialize scanner
     scanner = Scanner(scan_id=scan_config.scan_id)
     
+    # Process providers
+    providers_to_scan = []
+    
+    # Check --providers CLI option
+    if "providers" in scan_config.__dict__ and scan_config.providers:
+        providers_to_scan = [p.strip().lower() for p in scan_config.providers.split(",")]
+    
+    # Add AWS if flag is set
+    if aws:
+        providers_to_scan.append("aws")
+    
+    # Add all providers if flag is set
+    if all_providers:
+        providers_to_scan.extend(["aws", "azure"])
+    
+    # Remove duplicates
+    providers_to_scan = list(set(providers_to_scan))
+    
+    logger.info(f"Scanning providers: {', '.join(providers_to_scan) if providers_to_scan else 'none'}")
+    
     # Register providers
-    if "aws" in scan_config.__dict__ and (scan_config.aws.profile_name or scan_config.aws.access_key_id):
-        aws_provider = AwsProvider(config=scan_config.aws)
+    if "aws" in providers_to_scan:
+        aws_config = scan_config.aws if hasattr(scan_config, "aws") else {}
+        if scan_config.get("mock", False):
+            aws_config["use_mock"] = True
+        aws_provider = AwsProvider(config=aws_config)
         scanner.register_provider(aws_provider)
     
-    if azure or all_providers:
+    if "azure" in providers_to_scan:
         # Azure provider would be registered here when implemented
-        pass
+        logger.info("Azure provider is not fully implemented yet")
     
     # Run scan
     start_time = datetime.now()

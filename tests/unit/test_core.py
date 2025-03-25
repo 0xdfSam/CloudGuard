@@ -20,7 +20,6 @@ def test_finding_creation():
         name="Test Resource",
         type="test-type",
         region="us-east-1",
-        service="s3",
         arn="arn:aws:s3:::test-bucket",
     )
     
@@ -28,12 +27,14 @@ def test_finding_creation():
         title="Test Finding",
         description="This is a test finding",
         severity=Severity.MEDIUM,
-        resource=resource,
+        service="s3",
+        provider="aws",
+        resources=[resource],
         remediation="Fix this issue",
     )
     
     assert finding.title == "Test Finding"
     assert finding.description == "This is a test finding"
     assert finding.severity == Severity.MEDIUM
-    assert finding.resource == resource
+    assert finding.resources[0] == resource
     assert finding.remediation == "Fix this issue" 

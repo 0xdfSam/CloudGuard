@@ -5,7 +5,7 @@ Unit tests for the Azure scanner.
 import pytest
 from unittest.mock import patch, MagicMock
 from cloudguard.cli.azure import azure_main
-from cloudguard.core.findings import Severity
+from cloudguard.core.findings import Severity, Resource
 
 
 @patch('cloudguard.cli.azure.AzureScanner')
@@ -22,28 +22,32 @@ def test_azure_scanner_mock_mode(mock_scanner):
             "description": "This is a mock finding for testing purposes",
             "severity": Severity.HIGH,
             "service": "storage",
-            "resource": {
-                "id": "mock-storage-account",
-                "name": "mockstorageaccount",
-                "type": "storage_account",
-                "region": "eastus",
-                "service": "storage",
-                "arn": "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/mock-rg/providers/Microsoft.Storage/storageAccounts/mockstorageaccount"
-            }
+            "provider": "azure",
+            "resources": [
+                {
+                    "id": "mock-storage-account",
+                    "name": "mockstorageaccount",
+                    "type": "storage_account",
+                    "region": "eastus",
+                    "arn": "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/mock-rg/providers/Microsoft.Storage/storageAccounts/mockstorageaccount"
+                }
+            ]
         },
         {
             "title": "Mock Azure Key Vault Finding",
             "description": "This is a mock finding for testing purposes",
             "severity": Severity.MEDIUM,
             "service": "keyvault",
-            "resource": {
-                "id": "mock-keyvault",
-                "name": "mock-keyvault",
-                "type": "keyvault",
-                "region": "westus",
-                "service": "keyvault",
-                "arn": "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/mock-rg/providers/Microsoft.KeyVault/vaults/mock-keyvault"
-            }
+            "provider": "azure",
+            "resources": [
+                {
+                    "id": "mock-keyvault",
+                    "name": "mock-keyvault",
+                    "type": "keyvault",
+                    "region": "westus",
+                    "arn": "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/mock-rg/providers/Microsoft.KeyVault/vaults/mock-keyvault"
+                }
+            ]
         }
     ]
     

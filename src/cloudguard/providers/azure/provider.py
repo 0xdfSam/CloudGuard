@@ -12,7 +12,7 @@ from azure.core.exceptions import ClientAuthenticationError
 from ...core.findings import Finding
 from ...utils.config import AzureConfig
 from ..base import BaseProvider
-from .storage import StorageScanner
+from .services.storage import StorageScanner
 
 logger = logging.getLogger(__name__)
 
@@ -22,11 +22,12 @@ class AzureProvider(BaseProvider):
 
     name = "azure"
 
-    def __init__(self, config: AzureConfig):
+    def __init__(self, config: AzureConfig, mock: bool = False):
         """Initialize the Azure provider scanner.
 
         Args:
             config: Azure-specific configuration
+            mock: Whether to use mock data instead of calling Azure APIs
         """
         super().__init__(config)
         self.azure_config = config
@@ -36,6 +37,7 @@ class AzureProvider(BaseProvider):
             "storage", "keyvault", "network", "compute", "database", "webapp", "container"
         }
         self.scanners = {}
+        self.mock = mock
 
     async def authenticate(self) -> bool:
         """Authenticate with Azure.
@@ -111,6 +113,11 @@ class AzureProvider(BaseProvider):
         Returns:
             List of security findings
         """
+        # Use mock data if in mock mode
+        if self.mock:
+            logger.info("Running in mock mode, returning mock findings")
+            return self._get_mock_findings()
+            
         if not self.credential:
             success = await self.authenticate()
             if not success:
@@ -148,6 +155,60 @@ class AzureProvider(BaseProvider):
                         findings.extend(result)
         
         return findings
+
+    def _get_mock_findings(self) -> List[Finding]:
+        """Return mock findings for testing purposes.
+        
+        Returns:
+            List of mock findings
+        """
+        from ...core.findings import Finding, Severity, Resource
+        from datetime import datetime
+        import uuid
+        
+        # Create mock storage account finding
+        storage_finding = Finding(
+            title="Mock Azure Storage Finding",
+            description="This is a mock finding for testing purposes",
+            provider="azure",
+            service="storage",
+            severity=Severity.HIGH,
+            id=str(uuid.uuid4()),
+            resources=[
+                Resource(
+                    id="mock-storage-account",
+                    name="mockstorageaccount",
+                    type="storage_account",
+                    region="eastus",
+                    arn="/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/mock-rg/providers/Microsoft.Storage/storageAccounts/mockstorageaccount",
+                    properties={}
+                )
+            ],
+            created_at=datetime.now(),
+        )
+        
+        # Create mock keyvault finding
+        keyvault_finding = Finding(
+            title="Mock Azure Key Vault Finding",
+            description="This is a mock finding for testing purposes",
+            provider="azure",
+            service="keyvault",
+            severity=Severity.MEDIUM,
+            id=str(uuid.uuid4()),
+            resources=[
+                Resource(
+                    id="mock-keyvault",
+                    name="mock-keyvault",
+                    type="keyvault",
+                    region="westus",
+                    arn="/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/mock-rg/providers/Microsoft.KeyVault/vaults/mock-keyvault",
+                    properties={}
+                )
+            ],
+            created_at=datetime.now(),
+        )
+        
+        return [storage_finding, keyvault_finding]
 
     async def get_resources(self) -> Dict[str, List[Dict]]:
         """Get a list of resources from Azure.

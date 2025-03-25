@@ -98,6 +98,7 @@ class ScanConfig:
     concurrency: int = 10
     disable_progress_bar: bool = False
     no_color: bool = False
+    mock: bool = False
 
 
 def load_config_file(config_path: str) -> Dict[str, Any]:
@@ -200,5 +201,6 @@ def load_config(config_path: Optional[str] = None, cli_args: Optional[Dict[str, 
         included_checks=config_dict.get('included_checks'),
         concurrency=config_dict.get('concurrency', 10),
         disable_progress_bar=config_dict.get('disable_progress_bar', False),
-        no_color=config_dict.get('no_color', False)
+        no_color=config_dict.get('no_color', False),
+        mock=config_dict.get('mock', False)
     ) 

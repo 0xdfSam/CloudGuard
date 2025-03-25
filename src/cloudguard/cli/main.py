@@ -5,6 +5,7 @@ import sys
 import click
 import time
 import logging
+import asyncio
 from typing import List, Optional, Dict, Any, Set
 from datetime import datetime
 
@@ -14,6 +15,7 @@ from cloudguard.core.reporting import generate_reports
 from cloudguard.utils.logger import CloudGuardLogger, LoggingConfig
 from cloudguard.utils.config import load_config, ScanConfig
 from cloudguard.providers.aws import AwsProvider
+from cloudguard.providers.azure import AzureProvider
 
 # Define version
 __version__ = "0.1.0"
@@ -41,17 +43,20 @@ def get_scanner(config: ScanConfig) -> Scanner:
     Returns:
         Configured scanner
     """
-    scanner = Scanner(scan_name=config.scan_name)
+    scanner = Scanner(config=config)
+    
+    # Get mock mode from config
+    mock_mode = getattr(config, "mock", False)
     
     # Register providers based on configuration
     if "aws" in config.providers and config.aws.enabled:
-        aws_provider = AwsProvider(config.aws)
+        aws_provider = AwsProvider(config.aws, mock=mock_mode)
         scanner.register_provider(aws_provider)
     
     # Azure provider will be added in future version
-    # if "azure" in config.providers and config.azure.enabled:
-    #     azure_provider = AzureProvider(config.azure)
-    #     scanner.register_provider(azure_provider)
+    if "azure" in config.providers and getattr(config.azure, "enabled", False):
+        azure_provider = AzureProvider(config.azure, mock=mock_mode)
+        scanner.register_provider(azure_provider)
     
     return scanner
 
@@ -100,9 +105,16 @@ def should_fail_scan(fail_on_severity: Optional[str], findings_by_severity: Dict
 
 @click.group()
 @click.version_option(version=__version__)
-def cli():
+@click.option(
+    "--mock",
+    is_flag=True,
+    help="Run in mock mode without connecting to cloud providers."
+)
+@click.pass_context
+def cli(ctx, mock: bool = False):
     """CloudGuard: Automated Vulnerability Scanner for Cloud Services."""
-    pass
+    # Store mock flag in context for subcommands
+    ctx.obj = {'mock': mock}
 
 
 @cli.command()
@@ -143,7 +155,9 @@ def cli():
                       case_sensitive=False),
     help="Fail the scan if findings at or above this severity are found."
 )
+@click.pass_context
 def scan(
+    ctx,
     config: Optional[str],
     output_dir: Optional[str],
     scan_name: Optional[str],
@@ -154,6 +168,9 @@ def scan(
 ) -> None:
     """Run a security scan against cloud providers."""
     start_time = time.time()
+    
+    # Get mock flag from context
+    mock = ctx.obj.get('mock', False) if ctx.obj else False
     
     # Parse CLI args
     cli_args: Dict[str, Any] = {}
@@ -169,6 +186,8 @@ def scan(
         cli_args["log_file"] = log_file
     if fail_on_severity:
         cli_args["fail_on_severity"] = fail_on_severity
+    # Add mock flag to CLI args
+    cli_args["mock"] = mock
     
     # Load configuration
     try:
@@ -187,7 +206,8 @@ def scan(
     
     # Run scan
     try:
-        findings = scanner.run()
+        # Use asyncio.run to execute the coroutine
+        findings = asyncio.run(scanner.run())
         logger.info(f"Scan completed with {len(findings)} findings")
     except Exception as e:
         logger.error(f"Error during scan: {e}", exc_info=True)
@@ -205,18 +225,12 @@ def scan(
     try:
         report_files = generate_reports(
             findings=findings,
-            formats=scan_config.report.formats,
-            output_dir=scan_config.output_dir,
-            filename_prefix=f"{scan_config.report.report_name_prefix}_{timestamp}",
-            include_passing=scan_config.report.include_passing,
-            include_resources=scan_config.report.include_resources,
-            include_remediation=scan_config.report.include_remediation,
-            include_framework_mappings=scan_config.report.include_framework_mappings
+            config=scan_config.report
         )
         
-        for fmt, file_path in report_files.items():
-            logger.info(f"Generated {fmt} report: {file_path}")
-            click.echo(f"Generated {fmt} report: {file_path}")
+        for report_path in report_files:
+            logger.info(f"Generated report: {report_path}")
+            click.echo(f"Generated report: {report_path}")
     except Exception as e:
         logger.error(f"Error generating reports: {e}", exc_info=True)
         click.echo(f"Error generating reports: {e}", err=True)
@@ -298,8 +312,8 @@ def verify(aws: bool, azure: bool, config: Optional[str]) -> None:
 
 
 def main():
-    """Entry point for the command-line interface."""
-    cli()
+    """Run the CloudGuard CLI."""
+    cli(obj={})
 
 
 if __name__ == "__main__":

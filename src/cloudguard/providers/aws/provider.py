@@ -20,11 +20,12 @@ class AwsProvider(BaseProvider):
 
     name = "aws"
 
-    def __init__(self, config: AwsConfig):
+    def __init__(self, config: AwsConfig, mock: bool = False):
         """Initialize the AWS provider scanner.
 
         Args:
             config: AWS-specific configuration
+            mock: Whether to use mock data instead of calling AWS APIs
         """
         super().__init__(config)
         self.aws_config = config
@@ -33,6 +34,7 @@ class AwsProvider(BaseProvider):
             "s3", "iam", "ec2", "kms", "apigateway", "lambda", "rds"
         }
         self.scanners = {}
+        self.mock = mock
 
     async def authenticate(self) -> bool:
         """Authenticate with AWS.
@@ -74,6 +76,11 @@ class AwsProvider(BaseProvider):
         Returns:
             List of security findings
         """
+        # Use mock data if in mock mode
+        if self.mock:
+            logger.info("Running in mock mode, returning mock findings")
+            return self._get_mock_findings()
+            
         if not self.sessions:
             success = await self.authenticate()
             if not success:
@@ -155,3 +162,57 @@ class AwsProvider(BaseProvider):
                 # etc.
             
             logger.debug(f"Initialized AWS scanners for services: {', '.join(self.scanners.keys())}")
+            
+    def _get_mock_findings(self) -> List[Finding]:
+        """Return mock findings for testing purposes.
+        
+        Returns:
+            List of mock findings
+        """
+        from ...core.findings import Finding, Severity, Resource
+        from datetime import datetime
+        import uuid
+        
+        # Create mock S3 finding
+        s3_finding = Finding(
+            title="Mock AWS S3 Finding",
+            description="This is a mock finding for testing purposes",
+            provider="aws",
+            service="s3",
+            severity=Severity.HIGH,
+            id=str(uuid.uuid4()),
+            resources=[
+                Resource(
+                    id="mock-bucket",
+                    name="mock-bucket",
+                    type="s3_bucket",
+                    region="us-east-1",
+                    arn="arn:aws:s3:::mock-bucket",
+                    properties={}
+                )
+            ],
+            created_at=datetime.now(),
+        )
+        
+        # Create mock IAM finding
+        iam_finding = Finding(
+            title="Mock AWS IAM Finding",
+            description="This is a mock finding for testing purposes",
+            provider="aws",
+            service="iam",
+            severity=Severity.MEDIUM,
+            id=str(uuid.uuid4()),
+            resources=[
+                Resource(
+                    id="mock-user",
+                    name="mock-user",
+                    type="iam_user",
+                    region="global",
+                    arn="arn:aws:iam::123456789012:user/mock-user",
+                    properties={}
+                )
+            ],
+            created_at=datetime.now(),
+        )
+        
+        return [s3_finding, iam_finding]

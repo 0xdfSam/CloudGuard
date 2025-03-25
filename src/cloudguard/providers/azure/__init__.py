@@ -1,4 +1,8 @@
 """Azure provider scanner implementation.
 
-This module will contain the Azure cloud provider scanner implementation in future versions.
-""" 
+This module contains the Azure cloud provider scanner implementation.
+"""
+
+from .provider import AzureProvider
+
+__all__ = ["AzureProvider"] 

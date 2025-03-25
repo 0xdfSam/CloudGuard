@@ -13,8 +13,10 @@ from io import StringIO
 from typing import Dict, List, Any, Optional
 
 from cloudguard.providers.azure.main import AzureScanner
-from cloudguard.core.findings import Finding
+from cloudguard.core.findings import Finding, Resource, Severity
 from cloudguard.utils.logger import CloudGuardLogger, get_logger
+from azure.identity.aio import ClientSecretCredential
+from azure.mgmt.resource.resources.aio import ResourceManagementClient
 
 logger = get_logger(__name__)
 
@@ -165,25 +167,64 @@ async def run_scan(args: argparse.Namespace) -> int:
         # Determine if we're in a test environment
         in_test = hasattr(sys, '_called_from_test') or 'pytest' in sys.modules
         
-        if args.use_mock and in_test:
-            # In test environment with mock mode, use scan_all method
-            findings = scanner.scan_all()
-            
-            # Convert findings from dict to Finding objects if needed
-            processed_findings = []
-            for finding_dict in findings:
-                if isinstance(finding_dict, dict):
-                    # Create Finding object from dictionary
-                    processed_findings.append(Finding(
-                        title=finding_dict["title"],
-                        description=finding_dict["description"],
-                        severity=finding_dict["severity"],
-                        service=finding_dict["service"],
-                        resource=finding_dict["resource"]
-                    ))
-                else:
-                    processed_findings.append(finding_dict)
-            findings = processed_findings
+        if args.use_mock:
+            if in_test:
+                # In test environment with mock mode, use scan_all method
+                findings = scanner.scan_all()
+                
+                # Convert findings from dict to Finding objects if needed
+                processed_findings = []
+                for finding_dict in findings:
+                    if isinstance(finding_dict, dict):
+                        # Create Finding object from dictionary
+                        processed_findings.append(Finding(
+                            title=finding_dict["title"],
+                            description=finding_dict["description"],
+                            severity=finding_dict["severity"],
+                            service=finding_dict["service"],
+                            provider=finding_dict.get("provider", "azure"),
+                            resources=[Resource(**r) for r in finding_dict["resources"]]
+                        ))
+                    else:
+                        processed_findings.append(finding_dict)
+                findings = processed_findings
+            else:
+                # Normal mock mode operation (not in test)
+                # Create mock findings for testing
+                findings = [
+                    Finding(
+                        title="Mock Azure Storage Finding",
+                        description="This is a mock finding for testing purposes",
+                        severity=Severity.HIGH,
+                        service="storage",
+                        provider="azure",
+                        resources=[
+                            Resource(
+                                id="mock-storage-account",
+                                name="mockstorageaccount",
+                                type="storage_account",
+                                region="eastus",
+                                arn="/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/mock-rg/providers/Microsoft.Storage/storageAccounts/mockstorageaccount"
+                            )
+                        ]
+                    ),
+                    Finding(
+                        title="Mock Azure Key Vault Finding",
+                        description="This is a mock finding for testing purposes",
+                        severity=Severity.MEDIUM,
+                        service="keyvault",
+                        provider="azure",
+                        resources=[
+                            Resource(
+                                id="mock-keyvault",
+                                name="mock-keyvault",
+                                type="keyvault",
+                                region="westus",
+                                arn="/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/mock-rg/providers/Microsoft.KeyVault/vaults/mock-keyvault"
+                            )
+                        ]
+                    )
+                ]
         else:
             # Normal scan operation
             authenticated = await scanner.authenticate()
